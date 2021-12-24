@@ -1,5 +1,6 @@
 #ifndef _QUEUE_LK_H_
 #define _QUEUE_LK_H_
+#endif
 #include <omp.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,7 +12,7 @@ typedef struct queue_node_s queue_node_s ;
 struct queue_node_s
 {
     int src;
-    int mesg;
+    char* mesg;
     struct queue_node_s *next_p;
 };
 
@@ -21,19 +22,19 @@ struct queue_s
     omp_lock_t lock;
     int enqueued;
     int dequeued;
-    struct queue_node_s *front_p;
-    struct queue_node_s *tail_p;
+    queue_node_s *front_p ;
+    queue_node_s *tail_p ;
 };
 
 queue_s *Allocate_queue(void);
 void Free_queue(queue_s *q_p);
 void Print_queue(queue_s *q_p);
-void Enqueue(queue_s *q_p, int src, int mesg);
-queue_node_s *Dequeue(queue_s *q_p, int *src_p, int *mesg_p);
-int Search(queue_s *q_p, int mesg, int *src_p);
+void Enqueue(queue_s *q_p, int source, char* message);
+queue_node_s *Dequeue(queue_s *q_p, int *src_p, char *mesg_p);
+int Search(queue_s *q_p, char mesg, int *src_p);
 
 
-queue_s *Allocate_queue()
+queue_s * Allocate_queue()
 {
     struct queue_s *q_p = (queue_s*)malloc(sizeof(queue_s));
     q_p->enqueued = q_p->dequeued = NULL;
@@ -87,7 +88,7 @@ void Enqueue(queue_s *q_p, int source, char *message)
 }
 
 // remove a node from queue linkedlist end ,  and tokenize them
-queue_node_s* Dequeue(queue_s *q_p, int *src_p, int *mesg_p)
+queue_node_s* Dequeue(queue_s *q_p, int *src_p, char *mesg_p)
 {
     queue_node_s *temp_p;
     if (q_p->front_p == NULL)
@@ -120,5 +121,3 @@ int Search(queue_s *q_p, int mesg, int *src_p)
     }
     return;
 }
-
-#endif
