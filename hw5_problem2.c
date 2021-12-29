@@ -18,10 +18,10 @@
 /*  thread_count = #1 + #2                                  */
 /************************************************************/
 
-void get_keywords(char **golbal_keywords);
+//void get_keywords(char **golbal_keywords);
 void read_files(char *path, queue_s *shared_queue);
 void Tokenize(char *mesg, int keycount_array[]);
-void produce_consume(int producer_num, int consumer_num);
+void produce_consume(int producer_num, int consumer_num, int keycount_array[]);
 
 int main(int argc, char *argv[])
 {
@@ -29,21 +29,25 @@ int main(int argc, char *argv[])
     
     producer_num = strtol(argv[1], NULL, 10);
     consumer_num = strtol(argv[2], NULL, 10);
-
+    printf("%d , %d" , producer_num , consumer_num);
+    
     //get keywords
     char* golbal_keywords[6] = {"eyes" , "and" , "you" ,"me" ,"yeah" ,"all"};
     int keycount_array[6] = {0}; 
     //get_keywords(golbal_keywords);
 
-    produce_consume(producer_num , consumer_num);
+    produce_consume(producer_num, consumer_num, keycount_array);
 
     int i = 0 ;
     for (i = 0; i < NUM_KEYS; i++){
         printf("%s : %d", golbal_keywords[i], keycount_array[i]);
     }
     
+    
 
-    //prtinf("")
+
+
+
     /*
     //create a shared queue
     queue_s * shared_queue = Allocate_queue();
@@ -99,8 +103,10 @@ void read_files(char *path, queue_s *shared_queue)
 
 void Tokenize(char* mesg , int keycount_array[]){
     // split to tokens per line
+    if (mesg == NULL) return ;
     char *token = strtok(mesg, " ");
-    int i = 0 ;
+    printf("%s" , token);
+    /*
     while(token != NULL){
         //"eyes" , "and" , "you" ,"me" ,"yeah" ,"all"
         if (strcmp(token, "eyes") == 0) keycount_array[0]++;
@@ -110,9 +116,10 @@ void Tokenize(char* mesg , int keycount_array[]){
         else if (strcmp(token, "yeah") == 0) keycount_array[4]++;
         else if (strcmp(token, "all") == 0) keycount_array[5]++;
     }
+    */
 }
 
-void produce_consume(int producer_num, int consumer_num)
+void produce_consume(int producer_num, int consumer_num, int keycount_array[])
 {
     int thread_count = producer_num + consumer_num;
     //queue_node_s* queue_head = NULL ;
@@ -123,40 +130,47 @@ void produce_consume(int producer_num, int consumer_num)
     queue_s *shared_queue = Allocate_queue();
     int i = 0 ;
 
-    #pragma omp parallel num_threads(thread_count) default(none) private(i) shared(file_nums, producer_num, consumer_num, path, producer_exe_count, shared_queue)
+#pragma omp parallel num_threads(thread_count) default(none) private(i) shared(file_nums, producer_num, consumer_num, path, producer_exe_count, shared_queue, keycount_array)
     {
         int my_rank = omp_get_thread_num() ;
         if (my_rank < producer_num){
-            for (i = 0; i < file_nums + 1; i++)
+            for (i = 1; i < file_nums + 1; i++)
             {
                 path[10] = i + '0';
-                // puts(path);
                 read_files(path, shared_queue);
-
             }
             #pragma omp atomic
             producer_exe_count++;
         }
         else{
             queue_node_s* temp_node ;
+            temp_node = Dequeue(shared_queue, NULL, NULL);
+            Tokenize(temp_node->mesg, keycount_array);
+            /*
             while (producer_exe_count < producer_num)
             {
-                temp_node = Dequeue(shared_queue, NULL , my_rank);
+                temp_node = Dequeue(shared_queue, NULL , NULL);
                 if (temp_node != NULL)
                 {
-                    Tokenize(temp_node->mesg, my_rank);
+                    Tokenize(temp_node->mesg, keycount_array);
+                    //free(temp_node);
+                }
+            }
+            
+            while (shared_queue->front_p != NULL)
+            {
+                temp_node = Dequeue(shared_queue , NULL , NULL);
+                if (temp_node != NULL)
+                {
+                    Tokenize(temp_node->mesg, keycount_array);
                     free(temp_node);
                 }
             }
-            while (shared_queue->front_p != NULL)
-            {
-                temp_node = Dequeue(shared_queue , NULL , my_rank);
-                if (temp_node != NULL)
-                {
-                    Tokenize(temp_node->mesg, my_rank);
-                }
-            }
+            */
+            
         }
+        
+        
     }
 }
 
